@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Page Replacement Simulator</title>
+    <link rel="stylesheet" href="output.css" />
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+  <!-- Header -->
+  <header class="p-4 shadow-md flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Page Replacement Simulator</h1>
+    <button id="darkModeToggle" class="p-2 bg-gray-200 dark:bg-gray-700 rounded">Toggle Dark Mode</button>
+  </header>
+
+  <!-- Main Content -->
+  <main class="p-4">
+    <!-- Input Area -->
+    <section id="inputArea" class="mb-4">
+      <div class="mb-2">
+        <label for="pageReferences" class="block font-semibold">Page References:</label>
+        <input type="text" id="pageReferences" class="border p-2 w-full" placeholder="e.g., 7 0 1 2 0 3 0 4 2 3 0 3 2" />
+      </div>
+
+      <div class="mb-2">
+        <label for="frameCount" class="block font-semibold">Number of Frames:</label>
+        <input type="number" id="frameCount" class="border p-2 w-20" min="1" value="3" />
+      </div>
+
+      <div class="mb-2">
+        <label for="algorithm" class="block font-semibold">Algorithm:</label>
+        <select id="algorithm" class="border p-2">
+          <option value="FIFO">FIFO</option>
+          <option value="LRU">LRU</option>
+          <option value="Optimal">Optimal</option>
+          <!-- Add FIFOM if implemented -->
+        </select>
+      </div>
+
+      <button id="startSimulation" class="bg-blue-500 hover:bg-blue-600 text-white p-2 mt-2">Start Simulation</button>
+    </section>
+
+    <!-- Visualization Area -->
+    <section id="visualizationArea" class="mb-4 overflow-x-auto">
+      <!-- Interactive table will be generated here -->
+    </section>
+
+    <!-- Controls -->
+    <section id="controls" class="mb-4 flex space-x-2">
+      <button id="prevStep" class="bg-gray-500 text-white p-2 disabled:opacity-50" disabled>Previous</button>
+      <button id="nextStep" class="bg-gray-500 text-white p-2 disabled:opacity-50" disabled>Next</button>
+      <button id="playPause" class="bg-gray-500 text-white p-2" disabled>Play</button>
+    </section>
+
+    <!-- Summary Box -->
+    <section id="summaryBox" class="p-4 border rounded">
+      <h2 class="text-xl font-semibold">Simulation Summary</h2>
+      <p id="totalPageFaults">Total Page Faults: 0</p>
+      <div id="aiFeedback" class="mt-2">
+        <!-- AI-generated insights will be displayed here -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="p-4 text-center">
+    &copy; 2023 Page Replacement Simulator
+  </footer>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>
