@@ -45,6 +45,7 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
   
       // Clear previous visualization and feedback
       document.getElementById('visualizationArea').innerHTML = '';
+      document.getElementById('narrationText').innerText = '';
       document.getElementById('aiFeedback').innerText = '';
   
       // Generate initial visualization
@@ -56,6 +57,13 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
         pageFaults: simulationResult.pageFaults,
         frames: frameCount,
         pageReferences: pageRefs,
+      });
+  
+      // Initialize tooltips
+      tippy('.has-tooltip', {
+        content(reference) {
+          return reference.getAttribute('data-tippy-content');
+        },
       });
     } else {
       alert('Invalid input. Please enter valid page references and frame count.');
@@ -69,20 +77,20 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
   
   // FIFO Algorithm Implementation
   function simulateFIFO(pages, frameCount) {
-    let frames = [];
+    let frames = Array(frameCount).fill(null);
     let pageFaults = 0;
     let history = [];
+    let pointer = 0;
   
     pages.forEach((page, index) => {
       let fault = false;
+      let frameUpdated = null;
+  
       if (!frames.includes(page)) {
         fault = true;
-        if (frames.length < frameCount) {
-          frames.push(page);
-        } else {
-          frames.shift();
-          frames.push(page);
-        }
+        frames[pointer] = page;
+        frameUpdated = pointer;
+        pointer = (pointer + 1) % frameCount;
         pageFaults++;
       }
       history.push({
@@ -90,6 +98,7 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
         page: page,
         frames: [...frames],
         fault: fault,
+        frameUpdated: frameUpdated,
       });
     });
   
@@ -98,22 +107,27 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
   
   // LRU Algorithm Implementation
   function simulateLRU(pages, frameCount) {
-    let frames = [];
+    let frames = Array(frameCount).fill(null);
     let pageFaults = 0;
     let history = [];
     let recentUsage = [];
   
     pages.forEach((page, index) => {
       let fault = false;
+      let frameUpdated = null;
+  
       if (!frames.includes(page)) {
         fault = true;
-        if (frames.length < frameCount) {
-          frames.push(page);
+        if (frames.includes(null)) {
+          const emptyIndex = frames.indexOf(null);
+          frames[emptyIndex] = page;
+          frameUpdated = emptyIndex;
         } else {
           // Find least recently used page
-          let lruPage = recentUsage.shift();
-          let lruIndex = frames.indexOf(lruPage);
+          const lruPage = recentUsage.shift();
+          const lruIndex = frames.indexOf(lruPage);
           frames[lruIndex] = page;
+          frameUpdated = lruIndex;
         }
         pageFaults++;
       } else {
@@ -121,11 +135,13 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
         recentUsage.splice(recentUsage.indexOf(page), 1);
       }
       recentUsage.push(page);
+  
       history.push({
         step: index + 1,
         page: page,
         frames: [...frames],
         fault: fault,
+        frameUpdated: frameUpdated,
       });
     });
   
@@ -134,16 +150,20 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
   
   // Optimal Algorithm Implementation
   function simulateOptimal(pages, frameCount) {
-    let frames = [];
+    let frames = Array(frameCount).fill(null);
     let pageFaults = 0;
     let history = [];
   
     pages.forEach((page, index) => {
       let fault = false;
+      let frameUpdated = null;
+  
       if (!frames.includes(page)) {
         fault = true;
-        if (frames.length < frameCount) {
-          frames.push(page);
+        if (frames.includes(null)) {
+          const emptyIndex = frames.indexOf(null);
+          frames[emptyIndex] = page;
+          frameUpdated = emptyIndex;
         } else {
           // Predict future usage
           let futureIndices = frames.map((framePage) => {
@@ -152,6 +172,7 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
           });
           let victimIndex = futureIndices.indexOf(Math.max(...futureIndices));
           frames[victimIndex] = page;
+          frameUpdated = victimIndex;
         }
         pageFaults++;
       }
@@ -160,6 +181,7 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
         page: page,
         frames: [...frames],
         fault: fault,
+        frameUpdated: frameUpdated,
       });
     });
   
@@ -169,49 +191,62 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
   // Visualization Function
   function visualizeSimulation(history) {
     const visualizationArea = document.getElementById('visualizationArea');
-    visualizationArea.innerHTML = ''; // Clear previous visualization
+    visualizationArea.innerHTML = ''; // Clear previous content
   
+    const frameCount = history[0].frames.length;
+  
+    // Create the table
     const table = document.createElement('table');
-    table.className = 'w-full border-collapse';
+    table.className = 'w-full border-collapse text-center';
   
-    // Create table header
+    // Create header row
     const headerRow = document.createElement('tr');
-    headerRow.innerHTML = '<th class="border px-2 py-1">Step</th><th class="border px-2 py-1">Page</th>';
+    const emptyHeader = document.createElement('th');
+    emptyHeader.className = 'border px-2 py-1';
+    emptyHeader.innerText = 'Frame';
+    headerRow.appendChild(emptyHeader);
   
-    for (let i = 0; i < history[0].frames.length; i++) {
+    history.forEach((step) => {
       const th = document.createElement('th');
       th.className = 'border px-2 py-1';
-      th.innerText = `Frame ${i + 1}`;
+      th.innerText = `T${step.step}`;
       headerRow.appendChild(th);
-    }
-  
-    headerRow.innerHTML += '<th class="border px-2 py-1">Page Fault</th>';
+    });
     table.appendChild(headerRow);
   
-    // Create table rows
-    history.forEach((step) => {
+    // Create rows for each frame
+    for (let i = 0; i < frameCount; i++) {
       const row = document.createElement('tr');
-      row.classList.add('fade-in');
-      row.innerHTML = `<td class="border px-2 py-1">${step.step}</td><td class="border px-2 py-1">${step.page}</td>`;
   
-      step.frames.forEach((frame) => {
-        const td = document.createElement('td');
-        td.className = 'border px-2 py-1';
-        td.innerText = frame !== undefined ? frame : '';
-        row.appendChild(td);
+      const frameCell = document.createElement('td');
+      frameCell.className = 'border px-2 py-1 font-semibold';
+      frameCell.innerText = `Frame ${i + 1}`;
+      row.appendChild(frameCell);
+  
+      history.forEach((step) => {
+        const cell = document.createElement('td');
+        cell.className = 'border px-2 py-1 relative';
+        const pageInFrame = step.frames[i];
+  
+        if (pageInFrame !== null) {
+          cell.innerText = pageInFrame;
+  
+          if (step.frameUpdated === i) {
+            if (step.fault) {
+              cell.classList.add('bg-red-200', 'pulse-animation', 'has-tooltip');
+              cell.setAttribute('data-tippy-content', `Page fault: Loaded page ${pageInFrame} into Frame ${i + 1}`);
+            } else {
+              cell.classList.add('bg-green-200', 'has-tooltip');
+              cell.setAttribute('data-tippy-content', `Page hit: Page ${pageInFrame} was already in Frame ${i + 1}`);
+            }
+          }
+        }
+  
+        row.appendChild(cell);
       });
   
-      const faultTd = document.createElement('td');
-      faultTd.className = 'border px-2 py-1';
-      faultTd.innerHTML = step.fault ? '<span class="text-red-500">Yes</span>' : 'No';
-      row.appendChild(faultTd);
-  
-      if (step.fault) {
-        row.classList.add('bg-red-100');
-      }
-  
       table.appendChild(row);
-    });
+    }
   
     visualizationArea.appendChild(table);
   }
@@ -264,6 +299,23 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
   function showStep(stepIndex) {
     const historySlice = simulationHistory.slice(0, stepIndex + 1);
     visualizeSimulation(historySlice);
+  
+    // Update narration
+    const step = simulationHistory[stepIndex];
+    const narrationText = document.getElementById('narrationText');
+  
+    if (step.fault) {
+      narrationText.innerText = `At time T${step.step}, page ${step.page} caused a page fault and was loaded into Frame ${step.frameUpdated + 1}.`;
+    } else {
+      narrationText.innerText = `At time T${step.step}, page ${step.page} was already in memory. No page fault occurred.`;
+    }
+  
+    // Re-initialize tooltips for the new content
+    tippy('.has-tooltip', {
+      content(reference) {
+        return reference.getAttribute('data-tippy-content');
+      },
+    });
   }
   
   // Generate AI Feedback

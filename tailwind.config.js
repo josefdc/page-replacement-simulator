@@ -1,6 +1,6 @@
 module.exports = {
-  darkMode: 'class', // Enable dark mode
-  content: ['./*.html', './*.js'], // Specify content files
+  darkMode: 'class',
+  content: ['./*.html', './*.js'],
   theme: {
     extend: {},
   },

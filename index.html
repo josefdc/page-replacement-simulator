@@ -1,16 +1,19 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Page Replacement Simulator</title>
-    <link rel="stylesheet" href="output.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Page Replacement Simulator</title>
+  <!-- Include Tailwind CSS -->
+  <link rel="stylesheet" href="output.css" />
+  <!-- Include Tippy.js CSS for tooltips -->
+  <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css" />
 </head>
-<body class="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+<body class="bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-200">
   <!-- Header -->
   <header class="p-4 shadow-md flex items-center justify-between">
     <h1 class="text-2xl font-bold">Page Replacement Simulator</h1>
-    <button id="darkModeToggle" class="p-2 bg-gray-200 dark:bg-gray-700 rounded">Toggle Dark Mode</button>
+    <button id="darkModeToggle" class="p-2 bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded">Toggle Dark Mode</button>
   </header>
 
   <!-- Main Content -->
@@ -42,7 +45,7 @@
 
     <!-- Visualization Area -->
     <section id="visualizationArea" class="mb-4 overflow-x-auto">
-      <!-- Interactive table will be generated here -->
+      <!-- Interactive grid visualization will be generated here -->
     </section>
 
     <!-- Controls -->
@@ -52,13 +55,28 @@
       <button id="playPause" class="bg-gray-500 text-white p-2" disabled>Play</button>
     </section>
 
+    <!-- Narration Section -->
+    <section id="narration" class="mt-4 p-4 border rounded">
+      <h3 class="text-lg font-semibold">Step-by-Step Explanation</h3>
+      <p id="narrationText"></p>
+    </section>
+
     <!-- Summary Box -->
-    <section id="summaryBox" class="p-4 border rounded">
+    <section id="summaryBox" class="p-4 border rounded mt-4">
       <h2 class="text-xl font-semibold">Simulation Summary</h2>
       <p id="totalPageFaults">Total Page Faults: 0</p>
       <div id="aiFeedback" class="mt-2">
         <!-- AI-generated insights will be displayed here -->
       </div>
+    </section>
+
+    <!-- Legend Section -->
+    <section id="legend" class="mt-4">
+      <h3 class="text-lg font-semibold">Legend:</h3>
+      <ul class="list-disc list-inside">
+        <li><span class="inline-block w-4 h-4 bg-red-200 mr-2"></span>Page Fault (Page loaded into memory)</li>
+        <li><span class="inline-block w-4 h-4 bg-green-200 mr-2"></span>Page Hit (Page already in memory)</li>
+      </ul>
     </section>
   </main>
 
@@ -66,6 +84,10 @@
   <footer class="p-4 text-center">
     &copy; 2023 Page Replacement Simulator
   </footer>
+
+  <!-- Include Tippy.js and Popper.js -->
+  <script src="https://unpkg.com/@popperjs/core@2"></script>
+  <script src="https://unpkg.com/tippy.js@6"></script>
 
   <!-- Scripts -->
   <script src="app.js"></script>

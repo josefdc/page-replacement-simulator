@@ -4,15 +4,36 @@
 @tailwind utilities;
 
 /* Custom styles */
-.fade-in {
-  animation: fadeIn 0.5s ease-in-out;
+
+/* Highlight for page faults */
+.bg-red-200 {
+  @apply bg-red-200;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
+/* Highlight for page hits */
+.bg-green-200 {
+  @apply bg-green-200;
+}
+
+/* Pulse animation */
+@keyframes pulse {
+  0% {
+    background-color: #fecaca;
   }
-  to {
-    opacity: 1;
+  50% {
+    background-color: #f87171;
+  }
+  100% {
+    background-color: #fecaca;
   }
 }
+
+.pulse-animation {
+  animation: pulse 1s ease-in-out;
+}
+
+/* Tooltip styling if needed */
+.has-tooltip {
+  position: relative;
+}
+
