@@ -7,11 +7,19 @@ require('dotenv').config();
 const axios = require('axios');
 const path = require('path');
 
+// Middleware to parse JSON requests
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '/'))); // Serve static files
 
+// Serve static files from the project root
+app.use(express.static(path.join(__dirname, '/')));
+
+// Endpoint to handle AI feedback requests
 app.post('/api/ai-feedback', async (req, res) => {
   const prompt = req.body.prompt;
+
+  if (!prompt) {
+    return res.status(400).send('Prompt is required.');
+  }
 
   try {
     const response = await axios.post(
@@ -30,13 +38,15 @@ app.post('/api/ai-feedback', async (req, res) => {
       }
     );
 
-    res.json({ feedback: response.data.choices[0].message.content.trim() });
+    const feedback = response.data.choices[0].message.content.trim();
+    res.json({ feedback });
   } catch (error) {
     console.error(error.response ? error.response.data : error.message);
     res.status(500).send('Error communicating with OpenAI API');
   }
 });
 
+// Start the server
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });

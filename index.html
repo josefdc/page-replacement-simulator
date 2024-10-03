@@ -26,23 +26,23 @@
     <section id="inputArea" class="mb-4">
       <div class="mb-4">
         <label for="pageReferences" class="block font-semibold">Page References:</label>
-        <input type="text" id="pageReferences" class="border p-2 w-full" placeholder="e.g., 7 0 1 2 0 3 0 4 2 3 0 3 2" />
+        <input type="text" id="pageReferences" class="border p-2 w-full bg-white dark:bg-gray-800 dark:text-gray-200" placeholder="e.g., 7 0 1 2 0 3 0 4 2 3 0 3 2" />
         <p id="pageReferencesError" class="error-message">Please enter valid page references (numbers separated by spaces).</p>
       </div>
 
       <div class="mb-4">
         <label for="frameCount" class="block font-semibold">Number of Frames:</label>
-        <input type="number" id="frameCount" class="border p-2 w-20" min="1" value="3" />
+        <input type="number" id="frameCount" class="border p-2 w-20 bg-white dark:bg-gray-800 dark:text-gray-200" min="1" value="3" />
         <p id="frameCountError" class="error-message">Please enter a positive number for the frame count.</p>
       </div>
 
       <div class="mb-4">
         <label for="algorithm" class="block font-semibold">Algorithm:</label>
-        <select id="algorithm" class="border p-2 w-full sm:w-1/2">
+        <select id="algorithm" class="border p-2 w-full sm:w-1/2 bg-white dark:bg-gray-800 dark:text-gray-200">
           <option value="FIFO">FIFO</option>
+          <option value="ModifiedFIFO">Modified FIFO</option>
           <option value="LRU">LRU</option>
           <option value="Optimal">Optimal</option>
-          <!-- Add FIFOM if implemented -->
         </select>
       </div>
 
@@ -85,7 +85,7 @@
       </ul>
     </section>
 
-    <!-- Optional: Simulation Error Section (for future use) -->
+    <!-- Optional: Simulation Error Section -->
     <section id="simulationError" class="mt-4 p-4 border rounded hidden">
       <p class="text-red-500">An error occurred during the simulation. Please try again.</p>
     </section>

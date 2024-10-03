@@ -5,6 +5,33 @@
 
 /* Custom styles */
 
+/* Error input field */
+.input-error {
+  @apply border-red-500 bg-red-100 dark:bg-red-200 transition-colors duration-300;
+}
+
+/* Error message */
+.error-message {
+  @apply text-red-500 text-sm mt-1 hidden;
+}
+
+/* Flash animation for page faults */
+@keyframes flash {
+  0% {
+    background-color: #fff1f2; /* Light red */
+  }
+  50% {
+    background-color: #fca5a5; /* Medium red */
+  }
+  100% {
+    background-color: #fecaca; /* Light red */
+  }
+}
+
+.animate-fault {
+  animation: flash 1s forwards;
+}
+
 /* Highlight for page faults */
 .bg-red-200 {
   @apply bg-red-200;
@@ -15,37 +42,18 @@
   @apply bg-green-200;
 }
 
-/* Pulse animation */
-@keyframes pulse {
-  0% {
-    background-color: #fecaca;
-  }
-  50% {
-    background-color: #f87171;
-  }
-  100% {
-    background-color: #fecaca;
-  }
-}
-
-.pulse-animation {
-  animation: pulse 1s ease-in-out;
-}
-
-/* Tooltip styling if needed */
+/* Tooltip styling */
 .has-tooltip {
   position: relative;
 }
 
-/* Error input field */
-.input-error {
-    @apply border-red-500 bg-red-100 transition-colors duration-300;
-  }
-  
-  /* Error message */
-  .error-message {
-    @apply text-red-500 text-sm mt-1;
-  }
+/* Dark mode adjustments for inputs */
+input,
+select {
+  @apply bg-white text-gray-800;
+}
 
-
-  
+.dark input,
+.dark select {
+  @apply bg-gray-800 text-gray-200 border-gray-600;
+}

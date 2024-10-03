@@ -33,13 +33,15 @@ document.getElementById('startSimulation').addEventListener('click', () => {
       case 'FIFO':
         simulationResult = simulateFIFO(pageRefs, frameCount);
         break;
+      case 'ModifiedFIFO':
+        simulationResult = simulateModifiedFIFO(pageRefs, frameCount);
+        break;
       case 'LRU':
         simulationResult = simulateLRU(pageRefs, frameCount);
         break;
       case 'Optimal':
         simulationResult = simulateOptimal(pageRefs, frameCount);
         break;
-      // Add FIFOM implementation here if needed
       default:
         alert('Algorithm not implemented.');
         return;
@@ -52,11 +54,6 @@ document.getElementById('startSimulation').addEventListener('click', () => {
     // Display total page faults
     document.getElementById('totalPageFaults').innerText = `Total Page Faults: ${simulationResult.pageFaults}`;
 
-    // Enable simulation controls
-    document.getElementById('nextStep').disabled = false;
-    document.getElementById('playPause').disabled = false;
-    document.getElementById('prevStep').disabled = true;
-
     // Clear previous visualization, narration, and feedback
     document.getElementById('visualizationArea').innerHTML = '';
     document.getElementById('narrationText').innerText = '';
@@ -68,8 +65,17 @@ document.getElementById('startSimulation').addEventListener('click', () => {
       simulationError.classList.add('hidden');
     }
 
-    // Generate the initial visualization (all steps up to currentStep)
-    visualizeSimulation(simulationHistory.slice(0, currentStep));
+    // Initialize the visualization with frame labels
+    initializeVisualization(frameCount);
+
+    // Show the first step
+    showStep(0);
+    currentStep = 1; // Since we have shown the first step
+
+    // Enable simulation controls appropriately
+    document.getElementById('nextStep').disabled = false;
+    document.getElementById('prevStep').disabled = true;
+    document.getElementById('playPause').disabled = false;
 
     // Generate AI feedback based on the simulation results
     generateFeedback({
@@ -79,7 +85,6 @@ document.getElementById('startSimulation').addEventListener('click', () => {
       pageReferences: pageRefs,
     });
   } else {
-    // If validation fails, do not proceed with simulation
     console.log('Validation failed.');
   }
 });
@@ -138,7 +143,6 @@ document.getElementById('frameCount').addEventListener('input', () => {
 // Page Replacement Algorithms
 // ----------------------
 
-// FIFO Algorithm Implementation
 function simulateFIFO(pages, frameCount) {
   let frames = Array(frameCount).fill(null); // Initialize frames
   let pageFaults = 0;
@@ -169,7 +173,54 @@ function simulateFIFO(pages, frameCount) {
   return { history, pageFaults };
 }
 
-// LRU Algorithm Implementation
+// Modified FIFO (Second-Chance Algorithm) Implementation
+function simulateModifiedFIFO(pages, frameCount) {
+  let frames = Array(frameCount).fill(null); // Initialize frames
+  let referenceBits = Array(frameCount).fill(0); // Reference bits for second chance
+  let pageFaults = 0;
+  let history = [];
+  let pointer = 0; // Points to the frame to be replaced next
+
+  pages.forEach((page, index) => {
+    let fault = false;
+    let frameUpdated = null;
+
+    if (frames.includes(page)) {
+      // Page hit
+      const frameIndex = frames.indexOf(page);
+      referenceBits[frameIndex] = 1; // Set reference bit
+    } else {
+      // Page fault
+      fault = true;
+      while (true) {
+        if (referenceBits[pointer] === 0) {
+          // Replace this page
+          frames[pointer] = page;
+          frameUpdated = pointer;
+          referenceBits[pointer] = 0; // Reset reference bit
+          pointer = (pointer + 1) % frameCount;
+          break;
+        } else {
+          // Give a second chance
+          referenceBits[pointer] = 0;
+          pointer = (pointer + 1) % frameCount;
+        }
+      }
+      pageFaults++;
+    }
+
+    history.push({
+      step: index + 1,
+      page: page,
+      frames: [...frames],
+      fault: fault,
+      frameUpdated: frameUpdated,
+    });
+  });
+
+  return { history, pageFaults };
+}
+
 function simulateLRU(pages, frameCount) {
   let frames = Array(frameCount).fill(null);
   let pageFaults = 0;
@@ -214,7 +265,6 @@ function simulateLRU(pages, frameCount) {
   return { history, pageFaults };
 }
 
-// Optimal Algorithm Implementation
 function simulateOptimal(pages, frameCount) {
   let frames = Array(frameCount).fill(null);
   let pageFaults = 0;
@@ -258,38 +308,33 @@ function simulateOptimal(pages, frameCount) {
 }
 
 // ----------------------
-// Visualization Function
+// Initialize Visualization Function
 // ----------------------
-function visualizeSimulation(history) {
+function initializeVisualization(frameCount) {
   const visualizationArea = document.getElementById('visualizationArea');
   visualizationArea.innerHTML = ''; // Clear previous content
-
-  if (history.length === 0) return; // If no history, do nothing
-
-  const frameCount = history[0].frames.length;
 
   // Create the table element
   const table = document.createElement('table');
   table.className = 'w-full border-collapse text-center';
+  table.id = 'simulationTable';
 
   // Create the header row
   const headerRow = document.createElement('tr');
+  headerRow.id = 'tableHeaderRow';
+
   const emptyHeader = document.createElement('th');
   emptyHeader.className = 'border px-2 py-1';
   emptyHeader.innerText = 'Frame';
   headerRow.appendChild(emptyHeader);
 
-  history.forEach((step) => {
-    const th = document.createElement('th');
-    th.className = 'border px-2 py-1';
-    th.innerText = `T${step.step}`;
-    headerRow.appendChild(th);
-  });
   table.appendChild(headerRow);
 
   // Create rows for each frame
   for (let i = 0; i < frameCount; i++) {
     const row = document.createElement('tr');
+    row.classList.add('frame-row');
+    row.dataset.frameIndex = i;
 
     // Frame label cell
     const frameCell = document.createElement('td');
@@ -297,55 +342,81 @@ function visualizeSimulation(history) {
     frameCell.innerText = `Frame ${i + 1}`;
     row.appendChild(frameCell);
 
-    // Cells for each time step
-    history.forEach((step) => {
-      const cell = document.createElement('td');
-      cell.className = 'border px-2 py-1 relative';
-      const pageInFrame = step.frames[i];
-
-      if (pageInFrame !== null) {
-        cell.innerText = pageInFrame;
-
-        if (step.frameUpdated === i) {
-          if (step.fault) {
-            cell.classList.add('bg-red-200', 'pulse-animation', 'has-tooltip');
-            cell.setAttribute('data-tippy-content', `Page fault: Loaded page ${pageInFrame} into Frame ${i + 1}`);
-          } else {
-            cell.classList.add('bg-green-200', 'has-tooltip');
-            cell.setAttribute('data-tippy-content', `Page hit: Page ${pageInFrame} was already in Frame ${i + 1}`);
-          }
-        }
-      }
-
-      row.appendChild(cell);
-    });
-
     table.appendChild(row);
   }
 
   visualizationArea.appendChild(table);
+}
 
-  // Add Legend (if not already present)
-  if (!document.getElementById('legend')) {
-    const legend = document.createElement('section');
-    legend.id = 'legend';
-    legend.className = 'mt-4';
-    legend.innerHTML = `
-      <h3 class="text-lg font-semibold">Legend:</h3>
-      <ul class="list-disc list-inside">
-        <li><span class="inline-block w-4 h-4 bg-red-200 mr-2"></span>Page Fault (Page loaded into memory)</li>
-        <li><span class="inline-block w-4 h-4 bg-green-200 mr-2"></span>Page Hit (Page already in memory)</li>
-      </ul>
-    `;
-    visualizationArea.appendChild(legend);
-  }
+// ----------------------
+// Show Step Function
+// ----------------------
+function showStep(stepIndex) {
+  const table = document.getElementById('simulationTable');
+  if (!table) return;
 
-  // Initialize Tippy.js tooltips
-  tippy('.has-tooltip', {
-    placement: 'top',
-    arrow: true,
-    animation: 'scale',
+  const step = simulationHistory[stepIndex];
+
+  // Add a new header cell for the current step
+  const headerRow = document.getElementById('tableHeaderRow');
+  const th = document.createElement('th');
+  th.className = 'border px-2 py-1';
+  th.innerText = `T${step.step}`;
+  headerRow.appendChild(th);
+
+  // For each frame, add a new cell
+  const frameRows = table.querySelectorAll('.frame-row');
+
+  frameRows.forEach((row) => {
+    const frameIndex = parseInt(row.dataset.frameIndex);
+    const cell = document.createElement('td');
+    cell.className = 'border px-2 py-1 relative';
+
+    const pageInFrame = step.frames[frameIndex];
+
+    if (pageInFrame !== null) {
+      cell.innerText = pageInFrame;
+    }
+
+    if (step.frameUpdated === frameIndex) {
+      if (step.fault) {
+        // Page fault occurred in this frame
+        cell.classList.add('animate-fault', 'has-tooltip');
+        cell.setAttribute('data-tippy-content', `Page fault: Loaded page ${pageInFrame} into Frame ${frameIndex + 1}`);
+
+        // After animation ends, keep the highlight
+        cell.addEventListener('animationend', () => {
+          cell.classList.remove('animate-fault');
+          cell.classList.add('bg-red-200');
+        });
+      } else {
+        // Page hit
+        cell.classList.add('bg-green-200', 'has-tooltip');
+        cell.setAttribute('data-tippy-content', `Page hit: Page ${pageInFrame} was already in Frame ${frameIndex + 1}`);
+      }
+    } else if (step.fault && step.frames[frameIndex] === pageInFrame) {
+      // Highlight cells with page faults in previous steps
+      cell.classList.add('bg-red-200');
+    }
+
+    row.appendChild(cell);
+
+    // Initialize tooltip for this cell
+    tippy(cell, {
+      placement: 'top',
+      arrow: true,
+      animation: 'scale',
+    });
   });
+
+  // Update narration
+  const narrationText = document.getElementById('narrationText');
+
+  if (step.fault) {
+    narrationText.innerText = `At time T${step.step}, page ${step.page} caused a page fault and was loaded into Frame ${step.frameUpdated + 1}.`;
+  } else {
+    narrationText.innerText = `At time T${step.step}, page ${step.page} was already in memory. No page fault occurred.`;
+  }
 }
 
 // ----------------------
@@ -363,24 +434,24 @@ document.getElementById('nextStep').addEventListener('click', () => {
 });
 
 document.getElementById('prevStep').addEventListener('click', () => {
-  if (currentStep > 0) {
+  if (currentStep > 1) {
     currentStep--;
-    showStep(currentStep - 1);
+    removeStep(currentStep);
     document.getElementById('nextStep').disabled = false;
-  }
-  if (currentStep <= 0) {
+  } else if (currentStep === 1) {
+    currentStep--;
+    removeStep(0);
     document.getElementById('prevStep').disabled = true;
+    document.getElementById('nextStep').disabled = false;
   }
 });
 
 document.getElementById('playPause').addEventListener('click', () => {
   if (intervalId) {
-    // If currently playing, pause the simulation
     clearInterval(intervalId);
     intervalId = null;
     document.getElementById('playPause').innerText = 'Play';
   } else {
-    // If currently paused, start playing the simulation
     intervalId = setInterval(() => {
       if (currentStep < simulationHistory.length) {
         showStep(currentStep);
@@ -399,28 +470,35 @@ document.getElementById('playPause').addEventListener('click', () => {
 });
 
 // ----------------------
-// Show Step Function
+// Remove Step Function (for Previous button)
 // ----------------------
-function showStep(stepIndex) {
-  const historySlice = simulationHistory.slice(0, stepIndex + 1);
-  visualizeSimulation(historySlice);
+function removeStep(stepIndex) {
+  const table = document.getElementById('simulationTable');
+  if (!table) return;
+
+  // Remove the last header cell
+  const headerRow = document.getElementById('tableHeaderRow');
+  headerRow.removeChild(headerRow.lastChild);
+
+  // Remove the last cell from each frame row
+  const frameRows = table.querySelectorAll('.frame-row');
+  frameRows.forEach((row) => {
+    row.removeChild(row.lastChild);
+  });
 
   // Update narration
-  const step = simulationHistory[stepIndex];
-  const narrationText = document.getElementById('narrationText');
+  if (stepIndex > 0) {
+    const step = simulationHistory[stepIndex - 1];
+    const narrationText = document.getElementById('narrationText');
 
-  if (step.fault) {
-    narrationText.innerText = `At time T${step.step}, page ${step.page} caused a page fault and was loaded into Frame ${step.frameUpdated + 1}.`;
+    if (step.fault) {
+      narrationText.innerText = `At time T${step.step}, page ${step.page} caused a page fault and was loaded into Frame ${step.frameUpdated + 1}.`;
+    } else {
+      narrationText.innerText = `At time T${step.step}, page ${step.page} was already in memory. No page fault occurred.`;
+    }
   } else {
-    narrationText.innerText = `At time T${step.step}, page ${step.page} was already in memory. No page fault occurred.`;
+    document.getElementById('narrationText').innerText = 'Awaiting simulation...';
   }
-
-  // Re-initialize tooltips for the new content
-  tippy('.has-tooltip', {
-    placement: 'top',
-    arrow: true,
-    animation: 'scale',
-  });
 }
 
 // ----------------------
