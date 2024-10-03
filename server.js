@@ -17,7 +17,7 @@ app.post('/api/ai-feedback', async (req, res) => {
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
       {
-        model: 'gpt-4o-mini-2024-07-18', // Use 'gpt-4' if you have access
+        model: 'gpt-3.5-turbo', // Use 'gpt-4' if you have access
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 150,
         temperature: 0.7,
