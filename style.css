@@ -37,3 +37,15 @@
   position: relative;
 }
 
+/* Error input field */
+.input-error {
+    @apply border-red-500 bg-red-100 transition-colors duration-300;
+  }
+  
+  /* Error message */
+  .error-message {
+    @apply text-red-500 text-sm mt-1;
+  }
+
+
+  

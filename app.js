@@ -1,24 +1,34 @@
 // app.js
 
+// ----------------------
 // Dark Mode Toggle
+// ----------------------
 document.getElementById('darkModeToggle').addEventListener('click', () => {
     document.documentElement.classList.toggle('dark');
   });
   
+  // ----------------------
   // Simulation Variables
-  let simulationHistory = [];
-  let currentStep = 0;
-  let intervalId;
+  // ----------------------
+  let simulationHistory = []; // Stores the history of simulation steps
+  let currentStep = 0;        // Tracks the current step in the simulation
+  let intervalId;             // Stores the interval ID for play/pause functionality
   
+  // ----------------------
   // Event Listener for Start Simulation Button
+  // ----------------------
   document.getElementById('startSimulation').addEventListener('click', () => {
+    // Retrieve and process user inputs
     const pageRefsInput = document.getElementById('pageReferences').value.trim();
     const pageRefs = pageRefsInput.split(/\s+/).map(Number);
     const frameCount = parseInt(document.getElementById('frameCount').value);
     const algorithm = document.getElementById('algorithm').value;
   
+    // Validate inputs
     if (validateInput(pageRefs, frameCount)) {
       let simulationResult;
+  
+      // Execute the selected algorithm
       switch (algorithm) {
         case 'FIFO':
           simulationResult = simulateFIFO(pageRefs, frameCount);
@@ -29,58 +39,106 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
         case 'Optimal':
           simulationResult = simulateOptimal(pageRefs, frameCount);
           break;
-        // Implement FIFOM if needed
+        // Add FIFOM implementation here if needed
         default:
           alert('Algorithm not implemented.');
           return;
       }
   
+      // Update simulation history and reset current step
       simulationHistory = simulationResult.history;
       currentStep = 0;
+  
+      // Display total page faults
       document.getElementById('totalPageFaults').innerText = `Total Page Faults: ${simulationResult.pageFaults}`;
   
-      // Enable controls
+      // Enable simulation controls
       document.getElementById('nextStep').disabled = false;
       document.getElementById('playPause').disabled = false;
+      document.getElementById('prevStep').disabled = true;
   
-      // Clear previous visualization and feedback
+      // Clear previous visualization, narration, and feedback
       document.getElementById('visualizationArea').innerHTML = '';
       document.getElementById('narrationText').innerText = '';
       document.getElementById('aiFeedback').innerText = '';
+      document.getElementById('simulationError').innerText = ''; // Clear any previous simulation errors
   
-      // Generate initial visualization
-      visualizeSimulation(simulationHistory);
+      // Generate the initial visualization (all steps up to currentStep)
+      visualizeSimulation(simulationHistory.slice(0, currentStep));
   
-      // Generate AI feedback
+      // Generate AI feedback based on the simulation results
       generateFeedback({
         algorithm: algorithm,
         pageFaults: simulationResult.pageFaults,
         frames: frameCount,
         pageReferences: pageRefs,
       });
-  
-      // Initialize tooltips
-      tippy('.has-tooltip', {
-        content(reference) {
-          return reference.getAttribute('data-tippy-content');
-        },
-      });
     } else {
-      alert('Invalid input. Please enter valid page references and frame count.');
+      // If validation fails, do not proceed with simulation
+      console.log('Validation failed.');
     }
   });
   
+  // ----------------------
   // Input Validation Function
+  // ----------------------
   function validateInput(pages, frameCount) {
-    return pages.every((p) => !isNaN(p)) && frameCount > 0;
+    let isValid = true;
+  
+    // Validate Page References
+    const pageReferencesInput = document.getElementById('pageReferences');
+    const pageReferencesError = document.getElementById('pageReferencesError');
+    if (pages.length === 0 || pages.some((p) => isNaN(p))) {
+      isValid = false;
+      pageReferencesInput.classList.add('input-error');
+      pageReferencesError.classList.remove('hidden');
+    } else {
+      pageReferencesInput.classList.remove('input-error');
+      pageReferencesError.classList.add('hidden');
+    }
+  
+    // Validate Frame Count
+    const frameCountInput = document.getElementById('frameCount');
+    const frameCountError = document.getElementById('frameCountError');
+    if (isNaN(frameCount) || frameCount <= 0) {
+      isValid = false;
+      frameCountInput.classList.add('input-error');
+      frameCountError.classList.remove('hidden');
+    } else {
+      frameCountInput.classList.remove('input-error');
+      frameCountError.classList.add('hidden');
+    }
+  
+    return isValid;
   }
+  
+  // ----------------------
+  // Remove Error Styles on Input
+  // ----------------------
+  document.getElementById('pageReferences').addEventListener('input', () => {
+    const input = document.getElementById('pageReferences');
+    const error = document.getElementById('pageReferencesError');
+    input.classList.remove('input-error');
+    error.classList.add('hidden');
+  });
+  
+  document.getElementById('frameCount').addEventListener('input', () => {
+    const input = document.getElementById('frameCount');
+    const error = document.getElementById('frameCountError');
+    input.classList.remove('input-error');
+    error.classList.add('hidden');
+  });
+  
+  // ----------------------
+  // Page Replacement Algorithms
+  // ----------------------
   
   // FIFO Algorithm Implementation
   function simulateFIFO(pages, frameCount) {
-    let frames = Array(frameCount).fill(null);
+    let frames = Array(frameCount).fill(null); // Initialize frames
     let pageFaults = 0;
     let history = [];
-    let pointer = 0;
+    let pointer = 0; // Points to the frame to be replaced next
   
     pages.forEach((page, index) => {
       let fault = false;
@@ -93,6 +151,7 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
         pointer = (pointer + 1) % frameCount;
         pageFaults++;
       }
+  
       history.push({
         step: index + 1,
         page: page,
@@ -110,7 +169,7 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
     let frames = Array(frameCount).fill(null);
     let pageFaults = 0;
     let history = [];
-    let recentUsage = [];
+    let recentUsage = []; // Tracks the order of page usage
   
     pages.forEach((page, index) => {
       let fault = false;
@@ -123,7 +182,7 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
           frames[emptyIndex] = page;
           frameUpdated = emptyIndex;
         } else {
-          // Find least recently used page
+          // Find the least recently used page
           const lruPage = recentUsage.shift();
           const lruIndex = frames.indexOf(lruPage);
           frames[lruIndex] = page;
@@ -131,9 +190,11 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
         }
         pageFaults++;
       } else {
-        // Update recent usage
+        // Update recent usage by removing the page from its current position
         recentUsage.splice(recentUsage.indexOf(page), 1);
       }
+  
+      // Update recent usage by adding the current page
       recentUsage.push(page);
   
       history.push({
@@ -165,17 +226,20 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
           frames[emptyIndex] = page;
           frameUpdated = emptyIndex;
         } else {
-          // Predict future usage
+          // Predict future usage for each page in frames
           let futureIndices = frames.map((framePage) => {
             let nextUse = pages.slice(index + 1).indexOf(framePage);
             return nextUse === -1 ? Infinity : nextUse;
           });
+  
+          // Select the frame with the farthest next use
           let victimIndex = futureIndices.indexOf(Math.max(...futureIndices));
           frames[victimIndex] = page;
           frameUpdated = victimIndex;
         }
         pageFaults++;
       }
+  
       history.push({
         step: index + 1,
         page: page,
@@ -188,18 +252,22 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
     return { history, pageFaults };
   }
   
+  // ----------------------
   // Visualization Function
+  // ----------------------
   function visualizeSimulation(history) {
     const visualizationArea = document.getElementById('visualizationArea');
     visualizationArea.innerHTML = ''; // Clear previous content
   
+    if (history.length === 0) return; // If no history, do nothing
+  
     const frameCount = history[0].frames.length;
   
-    // Create the table
+    // Create the table element
     const table = document.createElement('table');
     table.className = 'w-full border-collapse text-center';
   
-    // Create header row
+    // Create the header row
     const headerRow = document.createElement('tr');
     const emptyHeader = document.createElement('th');
     emptyHeader.className = 'border px-2 py-1';
@@ -218,11 +286,13 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
     for (let i = 0; i < frameCount; i++) {
       const row = document.createElement('tr');
   
+      // Frame label cell
       const frameCell = document.createElement('td');
       frameCell.className = 'border px-2 py-1 font-semibold';
       frameCell.innerText = `Frame ${i + 1}`;
       row.appendChild(frameCell);
   
+      // Cells for each time step
       history.forEach((step) => {
         const cell = document.createElement('td');
         cell.className = 'border px-2 py-1 relative';
@@ -249,9 +319,33 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
     }
   
     visualizationArea.appendChild(table);
+  
+    // Add Legend (if not already present)
+    if (!document.getElementById('legend')) {
+      const legend = document.createElement('section');
+      legend.id = 'legend';
+      legend.className = 'mt-4';
+      legend.innerHTML = `
+        <h3 class="text-lg font-semibold">Legend:</h3>
+        <ul class="list-disc list-inside">
+          <li><span class="inline-block w-4 h-4 bg-red-200 mr-2"></span>Page Fault (Page loaded into memory)</li>
+          <li><span class="inline-block w-4 h-4 bg-green-200 mr-2"></span>Page Hit (Page already in memory)</li>
+        </ul>
+      `;
+      visualizationArea.appendChild(legend);
+    }
+  
+    // Initialize Tippy.js tooltips
+    tippy('.has-tooltip', {
+      placement: 'top',
+      arrow: true,
+      animation: 'scale',
+    });
   }
   
-  // Controls
+  // ----------------------
+  // Controls Event Listeners
+  // ----------------------
   document.getElementById('nextStep').addEventListener('click', () => {
     if (currentStep < simulationHistory.length) {
       showStep(currentStep);
@@ -276,10 +370,12 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
   
   document.getElementById('playPause').addEventListener('click', () => {
     if (intervalId) {
+      // If currently playing, pause the simulation
       clearInterval(intervalId);
       intervalId = null;
       document.getElementById('playPause').innerText = 'Play';
     } else {
+      // If currently paused, start playing the simulation
       intervalId = setInterval(() => {
         if (currentStep < simulationHistory.length) {
           showStep(currentStep);
@@ -287,15 +383,19 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
           document.getElementById('prevStep').disabled = false;
           if (currentStep >= simulationHistory.length) {
             clearInterval(intervalId);
+            intervalId = null;
             document.getElementById('playPause').innerText = 'Play';
             document.getElementById('nextStep').disabled = true;
           }
         }
-      }, 1000);
+      }, 1000); // Adjust the speed as needed (milliseconds)
       document.getElementById('playPause').innerText = 'Pause';
     }
   });
   
+  // ----------------------
+  // Show Step Function
+  // ----------------------
   function showStep(stepIndex) {
     const historySlice = simulationHistory.slice(0, stepIndex + 1);
     visualizeSimulation(historySlice);
@@ -312,13 +412,15 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
   
     // Re-initialize tooltips for the new content
     tippy('.has-tooltip', {
-      content(reference) {
-        return reference.getAttribute('data-tippy-content');
-      },
+      placement: 'top',
+      arrow: true,
+      animation: 'scale',
     });
   }
   
-  // Generate AI Feedback
+  // ----------------------
+  // Generate AI Feedback Function
+  // ----------------------
   async function generateFeedback(simulationData) {
     const prompt = `The user has just completed a page replacement simulation using the ${simulationData.algorithm} algorithm with ${simulationData.frames} frames and the page reference sequence ${simulationData.pageReferences.join(
       ', '
@@ -331,11 +433,19 @@ document.getElementById('darkModeToggle').addEventListener('click', () => {
         body: JSON.stringify({ prompt: prompt }),
       });
   
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+  
       const data = await response.json();
       document.getElementById('aiFeedback').innerText = data.feedback;
     } catch (error) {
-      console.error(error);
-      document.getElementById('aiFeedback').innerText = 'Error fetching AI feedback.';
+      console.error('Error fetching AI feedback:', error);
+      // Display error message with highlighting
+      const aiFeedback = document.getElementById('aiFeedback');
+      aiFeedback.innerText = 'Error fetching AI feedback.';
+      aiFeedback.classList.add('text-red-500');
+      aiFeedback.classList.remove('text-gray-800', 'dark:text-gray-200');
     }
   }
   
