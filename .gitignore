@@ -4,8 +4,7 @@ node_modules/
 # Environment variables
 .env
 
-# Build outputs
-output.css
+
 
 # Logs
 npm-debug.log*
