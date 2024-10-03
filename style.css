@@ -1,0 +1,62 @@
+/* style.css */
+
+/* Include Tailwind's base styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles */
+
+/* Error input field */
+.input-error {
+  @apply border-red-500 bg-red-100 dark:bg-red-200 transition-colors duration-300;
+}
+
+/* Error message */
+.error-message {
+  @apply text-red-500 text-sm mt-1 hidden;
+}
+
+/* Flash animation for page faults */
+@keyframes flash {
+  0% {
+    background-color: #fecaca; /* Tailwind's bg-red-200 */
+  }
+  50% {
+    background-color: #fca5a5; /* Tailwind's bg-red-300 */
+  }
+  100% {
+    background-color: #fecaca; /* Tailwind's bg-red-200 */
+  }
+}
+
+.animate-fault {
+  animation: flash 1s forwards;
+}
+
+/* Tooltip styling */
+.has-tooltip {
+  position: relative;
+}
+
+/* Dark mode adjustments for inputs */
+input,
+select {
+  @apply bg-white text-gray-800 border border-gray-300;
+}
+
+.dark input,
+.dark select {
+  @apply bg-gray-800 text-gray-200 border-gray-600;
+}
+
+/* Ensure table cells have consistent height for better visualization */
+#simulationTable td,
+#simulationTable th {
+  @apply h-10;
+}
+
+/* Customize disabled buttons for better UX */
+button:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
