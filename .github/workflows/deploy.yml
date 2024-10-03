@@ -16,10 +16,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'  # Asegúrate de usar la versión que tu proyecto requiere
+          node-version: '18.19.1'  # Asegúrate de usar la versión que tu proyecto requiere
 
       - name: Install dependencies
         run: npm install
+
+      # Agregar la clave de OpenAI a .env usando GitHub Secrets
+      - name: Set up OpenAI API Key
+        run: |
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
 
       - name: Build Tailwind CSS
         run: npx tailwindcss -i ./style.css -o ./output.css --minify
