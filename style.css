@@ -60,3 +60,41 @@ select {
 button:disabled {
   @apply opacity-50 cursor-not-allowed;
 }
+
+/* Performance Chart Section Styles */
+#performanceChartSection {
+  /* Set a fixed height to make the chart responsive */
+  height: 400px;
+}
+
+/* Adjust the Show Chart Button */
+#showChartBtn {
+  /* Ensure some spacing and alignment */
+  display: block;
+  margin-left: auto;
+}
+
+/* Responsive adjustments for the table and chart */
+@media (max-width: 768px) {
+  #simulationTable th,
+  #simulationTable td {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  #performanceChartSection {
+    height: 300px;
+  }
+
+  #performanceChart {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+/* Additional styles for better visualization */
+.frame-row td {
+  @apply bg-gray-100 dark:bg-gray-800;
+}
+
+/* Animation classes can be further customized if needed */

@@ -85,6 +85,16 @@
       </ul>
     </section>
 
+    <!-- Performance Chart Section -->
+    <section id="performanceChartSection" class="mt-4 p-4 border rounded hidden">
+      <h2 class="text-xl font-semibold mb-4">Performance Chart</h2>
+      <canvas id="performanceChart" width="400" height="200"></canvas>
+    </section>
+
+    <button id="showChartBtn" class="bg-green-500 hover:bg-green-600 text-white p-2 mt-2 rounded focus:outline-none">
+      Show Performance Chart
+    </button>
+
     <!-- Optional: Simulation Error Section -->
     <section id="simulationError" class="mt-4 p-4 border rounded hidden">
       <p class="text-red-500">An error occurred during the simulation. Please try again.</p>
@@ -93,14 +103,18 @@
 
   <!-- Footer -->
   <footer class="p-4 text-center">
-    &copy; 2025 Page Replacement Simulator
+    &copy; 2024 Page Replacement Simulator
   </footer>
 
   <!-- Include Tippy.js and Popper.js -->
   <script src="https://unpkg.com/@popperjs/core@2"></script>
   <script src="https://unpkg.com/tippy.js@6"></script>
 
+  <!-- Include Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <!-- Scripts -->
   <script src="app.js"></script>
+  <script src="chart.js"></script>
 </body>
 </html>

@@ -57,6 +57,9 @@ document.addEventListener('DOMContentLoaded', () => {
         simulationHistory = simulationResult.history;
         currentStep = 0;
 
+        // Expose simulationHistory globally for chart.js
+        window.simulationHistory = simulationHistory;
+
         // Display total page faults
         const totalPageFaultsElem = document.getElementById('totalPageFaults');
         if (totalPageFaultsElem) {
@@ -107,6 +110,12 @@ document.addEventListener('DOMContentLoaded', () => {
           frames: frameCount,
           pageReferences: pageRefs,
         });
+
+        // Reset Chart.js instance if exists
+        if (window.chartInstance) {
+          window.chartInstance.destroy();
+          window.chartInstance = null;
+        }
       } else {
         console.log('Validation failed.');
       }
