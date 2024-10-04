@@ -17,23 +17,6 @@
   @apply text-red-500 text-sm mt-1 hidden;
 }
 
-/* Flash animation for page faults */
-@keyframes flash {
-  0% {
-    background-color: #fecaca; /* Tailwind's bg-red-200 */
-  }
-  50% {
-    background-color: #fca5a5; /* Tailwind's bg-red-300 */
-  }
-  100% {
-    background-color: #fecaca; /* Tailwind's bg-red-200 */
-  }
-}
-
-.animate-fault {
-  animation: flash 1s forwards;
-}
-
 /* Tooltip styling */
 .has-tooltip {
   position: relative;
@@ -63,38 +46,28 @@ button:disabled {
 
 /* Performance Chart Section Styles */
 #performanceChartSection {
-  /* Set a fixed height to make the chart responsive */
-  height: 400px;
+  /* Optional: Add background color or padding adjustments */
+  padding: auto;
 }
 
-/* Adjust the Show Chart Button */
-#showChartBtn {
-  /* Ensure some spacing and alignment */
-  display: block;
-  margin-left: auto;
+#showChartBtn,
+#downloadChartBtn {
+  /* Optional: Add transition effects */
+  transition: background-color 0.3s;
 }
 
-/* Responsive adjustments for the table and chart */
-@media (max-width: 768px) {
-  #simulationTable th,
-  #simulationTable td {
-    padding: 0.5rem;
-    font-size: 0.875rem;
-  }
-
-  #performanceChartSection {
-    height: 300px;
-  }
-
-  #performanceChart {
-    width: 100% !important;
-    height: 100% !important;
-  }
+#showChartBtn:hover,
+#downloadChartBtn:hover {
+  /* Optional: Add hover effects */
+  background-color: #f3f4f6;
 }
 
-/* Additional styles for better visualization */
-.frame-row td {
-  @apply bg-gray-100 dark:bg-gray-800;
+/* Page Fault */
+.page-fault {
+  @apply bg-red-200 dark:bg-red-600 text-red-800 dark:text-red-200;
 }
 
-/* Animation classes can be further customized if needed */
+/* Page Hit */
+.page-hit {
+  @apply bg-green-200 dark:bg-green-600 text-green-800 dark:text-green-200;
+}

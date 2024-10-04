@@ -1,110 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Page Replacement Simulator</title>
-  
   <!-- Include Tailwind CSS -->
-  <link rel="stylesheet" href="output.css" />
-  
-  <!-- Include Tippy.js CSS for tooltips -->
-  <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css" />
+  <link href="output.css" rel="stylesheet">
 </head>
-<body class="bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-200">
-  <!-- Header -->
-  <header class="p-4 shadow-md flex items-center justify-between">
-    <h1 class="text-2xl font-bold">Page Replacement Simulator</h1>
-    <button id="darkModeToggle" class="p-2 bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded focus:outline-none">
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+  <div class="container mx-auto p-4">
+    <!-- Dark Mode Toggle -->
+    <button id="darkModeToggle" class="mb-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded">
       Toggle Dark Mode
     </button>
-  </header>
 
-  <!-- Main Content -->
-  <main class="p-4">
-    <!-- Input Area -->
-    <section id="inputArea" class="mb-4">
-      <div class="mb-4">
-        <label for="pageReferences" class="block font-semibold">Page References:</label>
-        <input type="text" id="pageReferences" class="border p-2 w-full bg-white dark:bg-gray-800 dark:text-gray-200" placeholder="e.g., 7 0 1 2 0 3 0 4 2 3 0 3 2" />
-        <p id="pageReferencesError" class="error-message">Please enter valid page references (numbers separated by spaces).</p>
+    <!-- Input Section -->
+    <section id="inputSection" class="mb-6">
+      <h2 class="text-2xl font-semibold mb-2">Simulation Configuration</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Page References Input -->
+        <div>
+          <label for="pageReferences" class="block mb-1">Page References:</label>
+          <input type="text" id="pageReferences" class="w-full p-2 border rounded" placeholder="e.g., 7 0 1 2 0 3 0 4">
+          <p id="pageReferencesError" class="error-message">Please enter a valid sequence of numbers.</p>
+        </div>
+        <!-- Frame Count Input -->
+        <div>
+          <label for="frameCount" class="block mb-1">Number of Frames:</label>
+          <input type="number" id="frameCount" class="w-full p-2 border rounded" min="1" placeholder="e.g., 3">
+          <p id="frameCountError" class="error-message">Please enter a valid number of frames.</p>
+        </div>
+        <!-- Algorithm Selection -->
+        <div>
+          <label for="algorithm" class="block mb-1">Replacement Algorithm:</label>
+          <select id="algorithm" class="w-full p-2 border rounded">
+            <option value="FIFO">FIFO</option>
+            <option value="ModifiedFIFO">Modified FIFO (Second-Chance)</option>
+            <option value="LRU">LRU</option>
+            <option value="Optimal">Optimal</option>
+          </select>
+        </div>
       </div>
+      <button id="startSimulation" class="mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded">
+        Start Simulation
+      </button>
+    </section>
 
-      <div class="mb-4">
-        <label for="frameCount" class="block font-semibold">Number of Frames:</label>
-        <input type="number" id="frameCount" class="border p-2 w-20 bg-white dark:bg-gray-800 dark:text-gray-200" min="1" value="3" />
-        <p id="frameCountError" class="error-message">Please enter a positive number for the frame count.</p>
-      </div>
-
-      <div class="mb-4">
-        <label for="algorithm" class="block font-semibold">Algorithm:</label>
-        <select id="algorithm" class="border p-2 w-full sm:w-1/2 bg-white dark:bg-gray-800 dark:text-gray-200">
-          <option value="FIFO">FIFO</option>
-          <option value="ModifiedFIFO">Modified FIFO</option>
-          <option value="LRU">LRU</option>
-          <option value="Optimal">Optimal</option>
-        </select>
-      </div>
-
-      <button id="startSimulation" class="bg-blue-500 hover:bg-blue-600 text-white p-2 mt-2 rounded focus:outline-none">Start Simulation</button>
+    <!-- Simulation Controls -->
+    <section id="controlsSection" class="mb-6">
+      <button id="prevStep" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded mr-2" disabled>
+        Previous Step
+      </button>
+      <button id="nextStep" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded mr-2" disabled>
+        Next Step
+      </button>
+      <button id="playPause" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded" disabled>
+        Play
+      </button>
     </section>
 
     <!-- Visualization Area -->
-    <section id="visualizationArea" class="mb-4 overflow-x-auto">
-      <!-- Interactive grid visualization will be generated here -->
+    <section id="visualizationArea" class="mb-6">
+      <!-- The simulation table will be generated here -->
     </section>
 
-    <!-- Controls -->
-    <section id="controls" class="mb-4 flex space-x-2">
-      <button id="prevStep" class="bg-gray-500 text-white p-2 rounded disabled:opacity-50" disabled>Previous</button>
-      <button id="nextStep" class="bg-gray-500 text-white p-2 rounded disabled:opacity-50" disabled>Next</button>
-      <button id="playPause" class="bg-gray-500 text-white p-2 rounded" disabled>Play</button>
+    <!-- Narration Text -->
+    <section id="narrationSection" class="mb-6">
+      <p id="narrationText" class="italic">Awaiting simulation...</p>
     </section>
 
-    <!-- Narration Section -->
-    <section id="narration" class="mt-4 p-4 border rounded">
-      <h3 class="text-lg font-semibold">Step-by-Step Explanation</h3>
-      <p id="narrationText">Awaiting simulation...</p>
-    </section>
-
-    <!-- Summary Box -->
-    <section id="summaryBox" class="p-4 border rounded mt-4">
-      <h2 class="text-xl font-semibold">Simulation Summary</h2>
-      <p id="totalPageFaults">Total Page Faults: 0</p>
-      <div id="aiFeedback" class="mt-2 text-gray-800 dark:text-gray-200">
-        <!-- AI-generated insights will be displayed here -->
-      </div>
+    <!-- AI Feedback -->
+    <section id="feedbackSection" class="mb-6">
+      <h3 class="text-xl font-semibold mb-2">AI Feedback:</h3>
+      <p id="aiFeedback" class="p-4 bg-gray-200 dark:bg-gray-800 rounded"></p>
     </section>
 
     <!-- Legend Section -->
-    <section id="legend" class="mt-4">
+    <section id="legend" class="mb-6">
       <h3 class="text-lg font-semibold">Legend:</h3>
       <ul class="list-disc list-inside">
-        <li><span class="inline-block w-4 h-4 bg-red-200 mr-2"></span>Page Fault (Page loaded into memory)</li>
-        <li><span class="inline-block w-4 h-4 bg-green-200 mr-2"></span>Page Hit (Page already in memory)</li>
+        <li><span class="inline-block w-4 h-4 page-fault mr-2"></span>Page Fault (Page fault occurred and loaded into memory)</li>
+        <li><span class="inline-block w-4 h-4 page-hit mr-2"></span>Page Hit (Page was already in memory)</li>
       </ul>
     </section>
 
     <!-- Performance Chart Section -->
-    <section id="performanceChartSection" class="mt-4 p-4 border rounded hidden">
+    <section id="performanceChartSection" class="mb-6 p-4 border rounded hidden">
       <h2 class="text-xl font-semibold mb-4">Performance Chart</h2>
-      <canvas id="performanceChart" width="400" height="200"></canvas>
+      <canvas id="performanceChart" width="800" height="400"></canvas>
+      <button id="downloadChartBtn" class="mt-4 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded">
+        Download Chart
+      </button>
     </section>
 
-    <button id="showChartBtn" class="bg-green-500 hover:bg-green-600 text-white p-2 mt-2 rounded focus:outline-none">
+    <!-- Show Chart Button -->
+    <button id="showChartBtn" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded">
       Show Performance Chart
     </button>
-
-    <!-- Optional: Simulation Error Section -->
-    <section id="simulationError" class="mt-4 p-4 border rounded hidden">
-      <p class="text-red-500">An error occurred during the simulation. Please try again.</p>
-    </section>
-  </main>
-
-  <!-- Footer -->
-  <footer class="p-4 text-center">
-    &copy; 2024 Page Replacement Simulator
-  </footer>
+  </div>
 
   <!-- Include Tippy.js and Popper.js -->
   <script src="https://unpkg.com/@popperjs/core@2"></script>
