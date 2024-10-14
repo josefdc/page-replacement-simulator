@@ -220,57 +220,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
     return { history, pageFaults };
   }
-
-  // Modified FIFO (Second-Chance Algorithm) Implementation
   function simulateModifiedFIFO(pages, frameCount) {
-    let frames = Array(frameCount).fill(null); // Initialize frames
-    let referenceBits = Array(frameCount).fill(0); // Reference bits for second chance
-    let pageFaults = 0;
-    let history = [];
-    let pointer = 0; // Points to the frame to be replaced next
-
+    let frames = Array(frameCount).fill(null); // Inicializar marcos vacíos
+    let referenceBits = Array(frameCount).fill(0); // Bits de referencia
+    let pageFaults = 0; // Contador de fallos de página
+    let history = []; // Historial de pasos
+    let pointer = 0; // Puntero al marco a reemplazar
+  
     pages.forEach((page, index) => {
       let fault = false;
       let frameUpdated = null;
       let hitFrames = [];
-
+  
+      // Verificar si la página ya está en los marcos (hit)
       if (frames.includes(page)) {
-        // Page hit
         const frameIndex = frames.indexOf(page);
-        referenceBits[frameIndex] = 1; // Set reference bit
-        hitFrames.push(frameIndex);
+        referenceBits[frameIndex] = 1; // Establecer bit de referencia a 1 en caso de hit
+        hitFrames.push(frameIndex); // Registrar el hit
       } else {
-        // Page fault
+        // Fallo de página
         fault = true;
+  
         while (true) {
           if (referenceBits[pointer] === 0) {
-            // Replace this page
+            // Reemplazar la página
             frames[pointer] = page;
             frameUpdated = pointer;
-            referenceBits[pointer] = 0; // Reset reference bit
-            pointer = (pointer + 1) % frameCount;
+            referenceBits[pointer] = 0; // Bit de referencia de nueva página es 0
+            pointer = (pointer + 1) % frameCount; // Avanzar el puntero
             break;
           } else {
-            // Give a second chance
+            // Resetear el bit de referencia y dar segunda oportunidad
             referenceBits[pointer] = 0;
-            pointer = (pointer + 1) % frameCount;
+            pointer = (pointer + 1) % frameCount; // Avanzar el puntero
           }
         }
         pageFaults++;
       }
-
+  
+      // Registrar el estado actual de los marcos
       history.push({
         step: index + 1,
         page: page,
         frames: [...frames],
         fault: fault,
         frameUpdated: frameUpdated,
-        hitFrames: hitFrames, // Array of frame indices that had hits
+        hitFrames: hitFrames,
+        referenceBits: [...referenceBits],
+        pointerPosition: pointer,
       });
     });
-
+  
     return { history, pageFaults };
   }
+  
+  
 
   function simulateLRU(pages, frameCount) {
     let frames = Array(frameCount).fill(null);
