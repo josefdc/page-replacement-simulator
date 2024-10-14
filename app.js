@@ -222,60 +222,63 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   function simulateModifiedFIFO(pages, frameCount) {
     let frames = Array(frameCount).fill(null); // Inicializar marcos vacíos
-    let referenceBits = Array(frameCount).fill(0); // Bits de referencia
-    let pageFaults = 0; // Contador de fallos de página
-    let history = []; // Historial de pasos
-    let pointer = 0; // Puntero al marco a reemplazar
-  
-    pages.forEach((page, index) => {
-      let fault = false;
-      let frameUpdated = null;
-      let hitFrames = [];
-  
-      // Verificar si la página ya está en los marcos (hit)
-      if (frames.includes(page)) {
-        const frameIndex = frames.indexOf(page);
-        referenceBits[frameIndex] = 1; // Establecer bit de referencia a 1 en caso de hit
-        hitFrames.push(frameIndex); // Registrar el hit
-      } else {
-        // Fallo de página
-        fault = true;
-  
-        while (true) {
-          if (referenceBits[pointer] === 0) {
-            // Reemplazar la página
-            frames[pointer] = page;
-            frameUpdated = pointer;
-            referenceBits[pointer] = 0; // Bit de referencia de nueva página es 0
-            pointer = (pointer + 1) % frameCount; // Avanzar el puntero
-            break;
-          } else {
-            // Resetear el bit de referencia y dar segunda oportunidad
-            referenceBits[pointer] = 0;
-            pointer = (pointer + 1) % frameCount; // Avanzar el puntero
+    let referenceBits = Array(frameCount).fill(0); // Bits de referencia (0 o 1)
+    let pagfunction simulateModifiedFIFO(pages, frameCount) {
+      let frames = Array(frameCount).fill(null); // Initialize empty frames
+      let referenceBits = Array(frameCount).fill(0); // Reference bits (0 or 1)
+      let pageFaults = 0; // Page fault counter
+      let history = []; // History of steps for analysis
+      let pointer = 0; // Pointer to the frame to evaluate
+    
+      pages.forEach((page, index) => {
+        let fault = false; // Page fault indicator
+        let frameUpdated = null; // Index of the updated frame
+        let hitFrames = []; // List of frames where a hit occurred
+    
+        // Check if the page is already in the frames (hit)
+        if (frames.includes(page)) {
+          const frameIndex = frames.indexOf(page);
+          referenceBits[frameIndex] = 1; // Set reference bit to 1 in case of a hit
+          hitFrames.push(frameIndex); // Record the hit
+        } else {
+          // Page fault
+          fault = true;
+    
+          // Replacement process with second chance
+          while (true) {
+            if (referenceBits[pointer] === 0) {
+              // Reference bit is 0, replace the page
+              frames[pointer] = page;
+              frameUpdated = pointer;
+              referenceBits[pointer] = 0; // Set reference bit of the new page to 0
+              pointer = (pointer + 1) % frameCount; // Advance pointer after replacement
+              break;
+            } else {
+              // Reference bit is 1, reset to 0 and give a second chance
+              referenceBits[pointer] = 0; // Reset reference bit
+              pointer = (pointer + 1) % frameCount; // Advance pointer
+            }
           }
+          pageFaults++;
         }
-        pageFaults++;
-      }
-  
-      // Registrar el estado actual de los marcos
-      history.push({
-        step: index + 1,
-        page: page,
-        frames: [...frames],
-        fault: fault,
-        frameUpdated: frameUpdated,
-        hitFrames: hitFrames,
-        referenceBits: [...referenceBits],
-        pointerPosition: pointer,
+    
+        // Record the current state of the frames and reference bits
+        history.push({
+          step: index + 1, // Current step
+          page: page, // Referenced page
+          frames: [...frames], // Copy of the current state of the frames
+          fault: fault, // Page fault indicator
+          frameUpdated: frameUpdated, // Index of the updated frame
+          hitFrames: hitFrames, // Indices of frames where a hit occurred
+          referenceBits: [...referenceBits], // Copy of the current reference bits
+          pointerPosition: pointer, // Current position of the pointer
+        });
       });
-    });
+    
+      return { history, pageFaults };
+    }
+    
   
-    return { history, pageFaults };
-  }
-  
-  
-
   function simulateLRU(pages, frameCount) {
     let frames = Array(frameCount).fill(null);
     let pageFaults = 0;
