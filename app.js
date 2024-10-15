@@ -220,65 +220,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
     return { history, pageFaults };
   }
+
+  // Modified FIFO (Second-Chance Algorithm) Implementation
   function simulateModifiedFIFO(pages, frameCount) {
-    let frames = Array(frameCount).fill(null); // Inicializar marcos vacíos
-    let referenceBits = Array(frameCount).fill(0); // Bits de referencia (0 o 1)
-    let pagfunction simulateModifiedFIFO(pages, frameCount) {
-      let frames = Array(frameCount).fill(null); // Initialize empty frames
-      let referenceBits = Array(frameCount).fill(0); // Reference bits (0 or 1)
-      let pageFaults = 0; // Page fault counter
-      let history = []; // History of steps for analysis
-      let pointer = 0; // Pointer to the frame to evaluate
-    
-      pages.forEach((page, index) => {
-        let fault = false; // Page fault indicator
-        let frameUpdated = null; // Index of the updated frame
-        let hitFrames = []; // List of frames where a hit occurred
-    
-        // Check if the page is already in the frames (hit)
-        if (frames.includes(page)) {
-          const frameIndex = frames.indexOf(page);
-          referenceBits[frameIndex] = 1; // Set reference bit to 1 in case of a hit
-          hitFrames.push(frameIndex); // Record the hit
-        } else {
-          // Page fault
-          fault = true;
-    
-          // Replacement process with second chance
-          while (true) {
-            if (referenceBits[pointer] === 0) {
-              // Reference bit is 0, replace the page
-              frames[pointer] = page;
-              frameUpdated = pointer;
-              referenceBits[pointer] = 0; // Set reference bit of the new page to 0
-              pointer = (pointer + 1) % frameCount; // Advance pointer after replacement
-              break;
-            } else {
-              // Reference bit is 1, reset to 0 and give a second chance
-              referenceBits[pointer] = 0; // Reset reference bit
-              pointer = (pointer + 1) % frameCount; // Advance pointer
-            }
+    let frames = Array(frameCount).fill(null); // Initialize frames
+    let referenceBits = Array(frameCount).fill(0); // Reference bits for second chance
+    let pageFaults = 0;
+    let history = [];
+    let pointer = 0; // Points to the frame to be replaced next
+
+    pages.forEach((page, index) => {
+      let fault = false;
+      let frameUpdated = null;
+      let hitFrames = [];
+
+      if (frames.includes(page)) {
+        // Page hit
+        const frameIndex = frames.indexOf(page);
+        referenceBits[frameIndex] = 1; // Set reference bit
+        hitFrames.push(frameIndex);
+      } else {
+        // Page fault
+        fault = true;
+        while (true) {
+          if (referenceBits[pointer] === 0) {
+            // Replace this page
+            frames[pointer] = page;
+            frameUpdated = pointer;
+            referenceBits[pointer] = 0; // Reset reference bit
+            pointer = (pointer + 1) % frameCount;
+            break;
+          } else {
+            // Give a second chance
+            referenceBits[pointer] = 0;
+            pointer = (pointer + 1) % frameCount;
           }
-          pageFaults++;
         }
-    
-        // Record the current state of the frames and reference bits
-        history.push({
-          step: index + 1, // Current step
-          page: page, // Referenced page
-          frames: [...frames], // Copy of the current state of the frames
-          fault: fault, // Page fault indicator
-          frameUpdated: frameUpdated, // Index of the updated frame
-          hitFrames: hitFrames, // Indices of frames where a hit occurred
-          referenceBits: [...referenceBits], // Copy of the current reference bits
-          pointerPosition: pointer, // Current position of the pointer
-        });
+        pageFaults++;
+      }
+
+      history.push({
+        step: index + 1,
+        page: page,
+        frames: [...frames],
+        fault: fault,
+        frameUpdated: frameUpdated,
+        hitFrames: hitFrames, // Array of frame indices that had hits
       });
-    
-      return { history, pageFaults };
-    }
-    
-  
+    });
+
+    return { history, pageFaults };
+  }
+
   function simulateLRU(pages, frameCount) {
     let frames = Array(frameCount).fill(null);
     let pageFaults = 0;
