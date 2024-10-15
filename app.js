@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ----------------------
   let simulationHistory = []; // Stores the history of simulation steps
   let currentStep = 0;        // Tracks the current step in the simulation
-  let intervalId;             // Stores the interval ID for play/pause functionality
+  let intervalId = null;      // Stores the interval ID for play/pause functionality
 
   // ----------------------
   // Event Listener for Start Simulation Button
@@ -56,6 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update simulation history and reset current step
         simulationHistory = simulationResult.history;
         currentStep = 0;
+
+        // Expose simulationHistory globally for chart.js
+        window.simulationHistory = simulationHistory;
 
         // Display total page faults
         const totalPageFaultsElem = document.getElementById('totalPageFaults');
@@ -217,58 +220,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
     return { history, pageFaults };
   }
-
-  // Modified FIFO (Second-Chance Algorithm) Implementation
   function simulateModifiedFIFO(pages, frameCount) {
-    let frames = Array(frameCount).fill(null); // Initialize frames
-    let referenceBits = Array(frameCount).fill(0); // Reference bits for second chance
-    let pageFaults = 0;
-    let history = [];
-    let pointer = 0; // Points to the frame to be replaced next
-
-    pages.forEach((page, index) => {
-      let fault = false;
-      let frameUpdated = null;
-      let hitFrames = [];
-
-      if (frames.includes(page)) {
-        // Page hit
-        const frameIndex = frames.indexOf(page);
-        referenceBits[frameIndex] = 1; // Set reference bit
-        hitFrames.push(frameIndex);
-      } else {
-        // Page fault
-        fault = true;
-        while (true) {
-          if (referenceBits[pointer] === 0) {
-            // Replace this page
-            frames[pointer] = page;
-            frameUpdated = pointer;
-            referenceBits[pointer] = 0; // Reset reference bit
-            pointer = (pointer + 1) % frameCount;
-            break;
-          } else {
-            // Give a second chance
-            referenceBits[pointer] = 0;
-            pointer = (pointer + 1) % frameCount;
+    let frames = Array(frameCount).fill(null); // Inicializar marcos vacíos
+    let referenceBits = Array(frameCount).fill(0); // Bits de referencia (0 o 1)
+    let pagfunction simulateModifiedFIFO(pages, frameCount) {
+      let frames = Array(frameCount).fill(null); // Initialize empty frames
+      let referenceBits = Array(frameCount).fill(0); // Reference bits (0 or 1)
+      let pageFaults = 0; // Page fault counter
+      let history = []; // History of steps for analysis
+      let pointer = 0; // Pointer to the frame to evaluate
+    
+      pages.forEach((page, index) => {
+        let fault = false; // Page fault indicator
+        let frameUpdated = null; // Index of the updated frame
+        let hitFrames = []; // List of frames where a hit occurred
+    
+        // Check if the page is already in the frames (hit)
+        if (frames.includes(page)) {
+          const frameIndex = frames.indexOf(page);
+          referenceBits[frameIndex] = 1; // Set reference bit to 1 in case of a hit
+          hitFrames.push(frameIndex); // Record the hit
+        } else {
+          // Page fault
+          fault = true;
+    
+          // Replacement process with second chance
+          while (true) {
+            if (referenceBits[pointer] === 0) {
+              // Reference bit is 0, replace the page
+              frames[pointer] = page;
+              frameUpdated = pointer;
+              referenceBits[pointer] = 0; // Set reference bit of the new page to 0
+              pointer = (pointer + 1) % frameCount; // Advance pointer after replacement
+              break;
+            } else {
+              // Reference bit is 1, reset to 0 and give a second chance
+              referenceBits[pointer] = 0; // Reset reference bit
+              pointer = (pointer + 1) % frameCount; // Advance pointer
+            }
           }
+          pageFaults++;
         }
-        pageFaults++;
-      }
-
-      history.push({
-        step: index + 1,
-        page: page,
-        frames: [...frames],
-        fault: fault,
-        frameUpdated: frameUpdated,
-        hitFrames: hitFrames, // Array of frame indices that had hits
+    
+        // Record the current state of the frames and reference bits
+        history.push({
+          step: index + 1, // Current step
+          page: page, // Referenced page
+          frames: [...frames], // Copy of the current state of the frames
+          fault: fault, // Page fault indicator
+          frameUpdated: frameUpdated, // Index of the updated frame
+          hitFrames: hitFrames, // Indices of frames where a hit occurred
+          referenceBits: [...referenceBits], // Copy of the current reference bits
+          pointerPosition: pointer, // Current position of the pointer
+        });
       });
-    });
-
-    return { history, pageFaults };
-  }
-
+    
+      return { history, pageFaults };
+    }
+    
+  
   function simulateLRU(pages, frameCount) {
     let frames = Array(frameCount).fill(null);
     let pageFaults = 0;
@@ -431,61 +441,58 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Simulation table not found.');
       return;
     }
-
+  
     const step = simulationHistory[stepIndex];
     if (!step) {
       console.error(`Step ${stepIndex} not found in simulation history.`);
       return;
     }
-
+  
     // Add a new header cell for the current step
     const headerRow = document.getElementById('tableHeaderRow');
     const th = document.createElement('th');
     th.className = 'border px-2 py-1';
     th.innerText = `T${step.step}`;
     headerRow.appendChild(th);
-
+  
     // For each frame, add a new cell
     const frameRows = table.querySelectorAll('.frame-row');
-
+  
     frameRows.forEach((row) => {
       const frameIndex = parseInt(row.dataset.frameIndex);
       const cell = document.createElement('td');
       cell.className = 'border px-2 py-1 relative';
-
+  
       const pageInFrame = step.frames[frameIndex];
-
+  
       if (pageInFrame !== null) {
         cell.innerText = pageInFrame;
       }
-
-      // Apply classes based on faults and hits
+  
+      // Remove any existing color classes to prevent conflicts
+      cell.classList.remove('bg-red-200', 'bg-green-200', 'text-red-800', 'text-green-800', 'text-red-200', 'text-green-200');
+  
+      // Apply custom classes based on faults and hits
       if (step.frameUpdated === frameIndex) {
         if (step.fault) {
           // Page fault occurred in this frame
-          cell.classList.add('animate-fault', 'has-tooltip');
+          cell.classList.add('page-fault', 'has-tooltip');
           cell.setAttribute('data-tippy-content', `Page fault: Loaded page ${pageInFrame} into Frame ${frameIndex + 1}`);
-
-          // After animation ends, keep the highlight
-          cell.addEventListener('animationend', () => {
-            cell.classList.remove('animate-fault');
-            cell.classList.add('bg-red-200');
-          }, { once: true }); // Use 'once' to prevent multiple listeners
         } else {
           // Page hit occurred in this frame
-          cell.classList.add('bg-green-200', 'has-tooltip');
+          cell.classList.add('page-hit', 'has-tooltip');
           cell.setAttribute('data-tippy-content', `Page hit: Page ${pageInFrame} was already in Frame ${frameIndex + 1}`);
         }
       }
-
-      // Apply green background for hits
+  
+      // Apply hit class for hits that are not the updated frame
       if (!step.fault && step.hitFrames.includes(frameIndex)) {
-        cell.classList.add('bg-green-200', 'has-tooltip');
+        cell.classList.add('page-hit', 'has-tooltip');
         cell.setAttribute('data-tippy-content', `Page hit: Page ${pageInFrame} was already in Frame ${frameIndex + 1}`);
       }
-
+  
       row.appendChild(cell);
-
+  
       // Initialize tooltip for this cell
       if (typeof tippy === 'function') { // Ensure tippy is loaded
         tippy(cell, {
@@ -495,7 +502,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
     });
-
+  
     // Update narration
     const narrationText = document.getElementById('narrationText');
     if (narrationText) {
@@ -556,12 +563,12 @@ document.addEventListener('DOMContentLoaded', () => {
             showStep(currentStep);
             currentStep++;
             if (prevStepBtn) prevStepBtn.disabled = false;
-            if (currentStep >= simulationHistory.length) {
-              clearInterval(intervalId);
-              intervalId = null;
-              playPauseBtn.innerText = 'Play';
-              if (nextStepBtn) nextStepBtn.disabled = true;
-            }
+          }
+          if (currentStep >= simulationHistory.length) {
+            clearInterval(intervalId);
+            intervalId = null;
+            playPauseBtn.innerText = 'Play';
+            if (nextStepBtn) nextStepBtn.disabled = true;
           }
         }, 1000); // Adjust the speed as needed (milliseconds)
         playPauseBtn.innerText = 'Pause';
@@ -591,7 +598,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const frameRows = table.querySelectorAll('.frame-row');
     frameRows.forEach((row) => {
       if (row.lastChild) {
-        // Remove tooltip-related data attributes and classes if necessary
+        // Remove tooltip-related data attributes and classes
         const cell = row.lastChild;
         cell.classList.remove('bg-red-200', 'bg-green-200', 'has-tooltip');
         cell.removeAttribute('data-tippy-content');
@@ -625,7 +632,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Generate AI Feedback Function
   // ----------------------
   async function generateFeedback(simulationData) {
-    const prompt = `The user has just completed a page replacement simulation using the ${simulationData.algorithm} algorithm with ${simulationData.frames} frames and the page reference sequence ${simulationData.pageReferences.join(
+    const prompt = `The user has completed a page replacement simulation using the ${simulationData.algorithm} algorithm with ${simulationData.frames} frames and the page reference sequence ${simulationData.pageReferences.join(
       ', '
     )}. There were ${simulationData.pageFaults} page faults. Provide a simple explanation of the results and suggest if a different algorithm might perform better.`;
 
